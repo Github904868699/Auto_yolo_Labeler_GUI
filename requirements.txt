@@ -54,3 +54,4 @@ cython==3.0.11
 # Packaging helpers
 setuptools>=68.0.0
 wheel>=0.44.0
+pyinstaller>=6.10.0

@@ -10,11 +10,17 @@ import cv2
 import numpy as np
 from util.QtFunc import *
 from util.xmlfile import *
+from util.path_utils import resource_path
 
 from GUI.UI_Main import Ui_MainWindow
 from GUI.message import LabelInputDialog
 
-sys.path.append("smapro")
+SAMPRO_PATH = Path(resource_path("sampro"))
+if SAMPRO_PATH.exists():
+    sampro_str = str(SAMPRO_PATH)
+    if sampro_str not in sys.path:
+        sys.path.append(sampro_str)
+
 from sampro.LabelQuick_TW import Anything_TW
 from sampro.LabelVideo_TW import AnythingVideo_TW
 
