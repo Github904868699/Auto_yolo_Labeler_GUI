@@ -97,6 +97,7 @@ class Ui_MainWindow(object):
         self.label_4.setObjectName("label_4")
         self.label_4.setStyleSheet("background: transparent;")
         self.stackedLayout.addWidget(self.label_4)
+        self.stackedLayout.setCurrentWidget(self.label_4)
 
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         self.layoutWidget = QtWidgets.QWidget(self.splitter)
@@ -296,6 +297,7 @@ class Ui_MainWindow(object):
         self.label_4.setStyleSheet("background: transparent;")
         self.label_4.setText("")
         self.stackedLayout.addWidget(self.label_4)
+        self.stackedLayout.setCurrentWidget(self.label_4)
 
 
 
@@ -313,6 +315,7 @@ class Ui_MainWindow(object):
         self.label_4.setStyleSheet("background: transparent;")
         self.label_4.setText("")
         self.stackedLayout.addWidget(self.label_4)
+        self.stackedLayout.setCurrentWidget(self.label_4)
         
 
 
