@@ -407,6 +407,7 @@ class AnythingVideo_TW():
         save_image_path=None,
         save_path=None,
         label_map=None,
+        progress_callback=None,
     ):
         """
         遍历所有帧并绘制轮廓
@@ -440,7 +441,9 @@ class AnythingVideo_TW():
 
         # 遍历所有帧
         xml_messages = []
-        for frame_idx in range(start_frame, len(frame_names)):
+        total_frames = len(frame_names)
+
+        for frame_idx in range(start_frame, total_frames):
             frame_path = os.path.join(self.video_path, frame_names[frame_idx])
             frame = cv2.imread(frame_path)
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -510,6 +513,12 @@ class AnythingVideo_TW():
                                 xml_messages.append([out_obj_id, result_label, file_path, size])
             else:
                 print(f"Warning: Invalid frame at index {frame_idx}")
+
+            if progress_callback:
+                try:
+                    progress_callback(frame_idx, total_frames)
+                except Exception as callback_error:
+                    print(f"Progress callback error at frame {frame_idx}: {callback_error}")
 
         # 始终返回元组，而不是在 return_frames=False 时返回 None
         return processed_frames, xml_messages
