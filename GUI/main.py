@@ -10,15 +10,19 @@ import cv2
 import numpy as np
 from util.QtFunc import *
 from util.xmlfile import *
+from util.config import load_config, save_config
 
 from GUI.UI_Main import Ui_MainWindow
 from GUI.message import LabelInputDialog
 
 sys.path.append("smapro")
 from sampro.LabelQuick_TW import Anything_TW
-from sampro.LabelVideo_TW import AnythingVideo_TW
+from sampro.LabelVideo_TW import AnythingVideo_TW, CONFIG_KEY_SAM_CHECKPOINT
 
 from PyQt5.QtCore import QThread, pyqtSignal, QTimer
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_SAM_CHECKPOINT_DIR = PROJECT_ROOT / "sampro" / "checkpoints"
 
 class VideoProcessingThread(QThread):
     finished = pyqtSignal()  # 完成信号
@@ -92,6 +96,9 @@ class MainFunc(QMainWindow):
 
         self.sld_video_pressed=False
 
+        self.app_config = load_config()
+        self.sam_checkpoint_path = self.app_config.get(CONFIG_KEY_SAM_CHECKPOINT, "")
+
 
         self.image_files = None
         self.img_path = None
@@ -117,8 +124,8 @@ class MainFunc(QMainWindow):
         self.pending_video_obj_id = None
         self.next_video_obj_id = 1
 
-        self.AT = Anything_TW()
-        self.AVT = AnythingVideo_TW()
+        self.AT = None
+        self.AVT = None
 
         self.timer_camera = QTimer()
 
@@ -133,6 +140,12 @@ class MainFunc(QMainWindow):
             action.setData(fmt)
             self.save_type_action_group.addAction(action)
             action.triggered.connect(lambda checked, fmt=fmt: self.on_save_type_triggered(fmt, checked))
+
+        self.action_select_sam_checkpoint = QtWidgets.QAction("选择 SAM 模型文件", self)
+        self.action_select_sam_checkpoint.triggered.connect(self.select_sam_checkpoint)
+        self.ui.menuFile.addSeparator()
+        self.ui.menuFile.addAction(self.action_select_sam_checkpoint)
+        self.update_checkpoint_action_status()
 
         self.annotation_format = None
         self.on_annotation_format_changed("YOLO")
@@ -162,6 +175,8 @@ class MainFunc(QMainWindow):
         self.total_frames = 0
         self.current_frame = 0
 
+        self.ensure_sam_models_ready()
+
     def Change_Enable(self,method="",state=False):
         if method=="ShowVideo":
             self.ui.pushButton.setEnabled(state)
@@ -174,6 +189,79 @@ class MainFunc(QMainWindow):
             self.ui.actionPrev_Image.setEnabled(state)
             self.ui.actionNext_Image.setEnabled(state)
             self.ui.actionCreate_RectBox.setEnabled(state)
+
+    def update_checkpoint_action_status(self):
+        if not hasattr(self, "action_select_sam_checkpoint"):
+            return
+
+        display_path = self.sam_checkpoint_path or str(DEFAULT_SAM_CHECKPOINT_DIR)
+        status_text = f"当前模型路径: {display_path}"
+        self.action_select_sam_checkpoint.setStatusTip(status_text)
+        self.action_select_sam_checkpoint.setToolTip(status_text)
+
+    def reset_sam_models(self):
+        self.AT = None
+        self.AVT = None
+
+    def ensure_sam_models_ready(self, *, show_dialog=True):
+        if self.AT is not None and self.AVT is not None:
+            return True
+
+        try:
+            self.AT = Anything_TW()
+            self.AVT = AnythingVideo_TW()
+            self.sam_checkpoint_path = getattr(self.AVT, "sam2_checkpoint", self.sam_checkpoint_path)
+            self.app_config[CONFIG_KEY_SAM_CHECKPOINT] = self.sam_checkpoint_path
+            save_config(self.app_config)
+            self.update_checkpoint_action_status()
+            return True
+        except FileNotFoundError as exc:
+            self.reset_sam_models()
+            if show_dialog:
+                self.show_checkpoint_error(str(exc))
+            self.update_checkpoint_action_status()
+            return False
+        except Exception as exc:
+            self.reset_sam_models()
+            if show_dialog:
+                self.show_checkpoint_error(f"加载 SAM 模型失败：{exc}")
+            self.update_checkpoint_action_status()
+            return False
+
+    def show_checkpoint_error(self, message):
+        QtWidgets.QMessageBox.critical(
+            self,
+            "SAM 模型不可用",
+            f"{message}\n\n您可以通过“File -> 选择 SAM 模型文件”来设置模型权重。",
+        )
+
+    def select_sam_checkpoint(self):
+        initial_dir = DEFAULT_SAM_CHECKPOINT_DIR
+        if self.sam_checkpoint_path:
+            candidate = Path(self.sam_checkpoint_path)
+            if candidate.is_file():
+                initial_dir = candidate.parent
+            elif candidate.exists():
+                initial_dir = candidate
+
+        file_path, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self,
+            "选择 SAM 模型文件",
+            str(initial_dir),
+            "PyTorch 权重 (*.pt *.pth);;All Files (*)",
+        )
+
+        if not file_path:
+            return
+
+        self.sam_checkpoint_path = file_path
+        self.app_config[CONFIG_KEY_SAM_CHECKPOINT] = file_path
+        save_config(self.app_config)
+        self.update_checkpoint_action_status()
+        self.reset_sam_models()
+
+        if self.ensure_sam_models_ready():
+            QtWidgets.QMessageBox.information(self, "模型已更新", "SAM 模型路径已更新。")
 
     def clear_label_list(self):
         self.ui.listWidget.clear()
@@ -267,6 +355,8 @@ class MainFunc(QMainWindow):
         self.ui.label_4.setCursor(Qt.ArrowCursor)
 
     def get_dir(self):
+        if not self.ensure_sam_models_ready():
+            return
         self.clear_label_list()
         if self.cap:
             self.timer_camera.stop()
@@ -292,6 +382,8 @@ class MainFunc(QMainWindow):
             self.ui.currentImageLabel.setText("")
 
     def show_path_image(self):
+        if not self.ensure_sam_models_ready():
+            return
         if self.image_files:
             self.image_path = self.image_files[self.current_index]
             # print(self.image_path)
@@ -429,6 +521,8 @@ class MainFunc(QMainWindow):
 # ########################################################################################################################
     # seg
     def mouse_press_event(self, event):
+        if not self.ensure_sam_models_ready():
+            return
         try:
             if self.img_path:
                 self.clicked_event = True
@@ -468,6 +562,8 @@ class MainFunc(QMainWindow):
 # ########################################################################################################################
 # 重写QWidget类的keyPressEvent方法
     def keyPressEvent(self, event):
+        if not self.ensure_sam_models_ready():
+            return
         if self.img_path:
             if self.clicked_event and not self.paint_event:
                 image = self.AT.Key_Event(event.key())
@@ -519,6 +615,8 @@ class MainFunc(QMainWindow):
 
     
     def on_dialog_confirmed(self, text):
+        if not self.ensure_sam_models_ready():
+            return
         if not self.save_path:
             upWindowsh("请选择保存路径")
 
@@ -872,6 +970,8 @@ class MainFunc(QMainWindow):
             self.ui.pushButton_4.setEnabled(False)
 
     def Btn_Auto(self):
+        if not self.ensure_sam_models_ready():
+            return
         if self.video_path and self.video_save_path:
             output_dir,saved_count = self.AVT.extract_frames_from_video(self.video_path, self.video_save_path, fps=2)
             content = f"已从视频中提取 {saved_count} 帧\n保存至 {output_dir}"
@@ -881,6 +981,8 @@ class MainFunc(QMainWindow):
             upWindowsh("请先选择视频和保存路径")
 
     def video_marking(self):
+        if not self.ensure_sam_models_ready():
+            return
         self.directory = None
         video_path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "选择视频", "", "Video Files (*.mp4 *.mpg)")
         self.video_path = video_path
@@ -1020,6 +1122,8 @@ class MainFunc(QMainWindow):
                             
 
     def Btn_Start_Marking(self):
+        if not self.ensure_sam_models_ready():
+            return
         # 禁用开始检测打标按钮
         self.ui.pushButton_start_marking.setEnabled(False)
         if self.video_path and self.output_dir:

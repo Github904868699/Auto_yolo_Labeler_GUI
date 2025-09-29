@@ -9,22 +9,55 @@ from PIL import Image
 
 from sampro.device import resolve_device
 from sampro.sam2.build_sam import build_sam2_video_predictor
+from util.config import load_config
 from util.xmlfile import xml_message
 
 SAMPRO_ROOT = Path(__file__).resolve().parent
+DEFAULT_CHECKPOINT_FILENAME = "sam2.1_hiera_large.pt"
+CONFIG_KEY_SAM_CHECKPOINT = "sam_checkpoint_path"
+
+
+def resolve_checkpoint_path() -> Path:
+    """Resolve the path to the SAM checkpoint with helpful error messages."""
+
+    config = load_config()
+    configured_path = config.get(CONFIG_KEY_SAM_CHECKPOINT)
+    env_override = os.getenv("SAM2_CHECKPOINT")
+
+    if configured_path:
+        checkpoint_path = Path(configured_path)
+    elif env_override:
+        checkpoint_path = Path(env_override)
+    else:
+        checkpoint_path = SAMPRO_ROOT / "checkpoints" / DEFAULT_CHECKPOINT_FILENAME
+
+    checkpoint_path = checkpoint_path.expanduser()
+    if checkpoint_path.is_dir():
+        checkpoint_path = checkpoint_path / DEFAULT_CHECKPOINT_FILENAME
+
+    try:
+        checkpoint_path = checkpoint_path.resolve()
+    except FileNotFoundError:
+        checkpoint_path = checkpoint_path.absolute()
+
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if not checkpoint_path.exists():
+        hint_directory = checkpoint_path.parent
+        raise FileNotFoundError(
+            "未找到 SAM 模型权重文件："
+            f"{checkpoint_path}.\n\n"
+            "请将模型文件复制到该位置，"
+            "或在界面中通过“File -> 选择 SAM 模型文件”重新选择权重。\n"
+            f"当前默认目录：{hint_directory}"
+        )
+
+    return checkpoint_path
 
 class AnythingVideo_TW():
     def __init__(self):
         # SAM2 模型配置
-        checkpoint_path = os.getenv(
-            "SAM2_CHECKPOINT",
-            SAMPRO_ROOT / "checkpoints" / "sam2.1_hiera_large.pt",
-        )
-        checkpoint_path = Path(checkpoint_path).expanduser().resolve()
-        if not checkpoint_path.exists():
-            raise FileNotFoundError(
-                f"未找到 SAM2 权重文件: {checkpoint_path}. 请将模型文件放在 sampro/checkpoints/ 目录"
-            )
+        checkpoint_path = resolve_checkpoint_path()
 
         self.sam2_checkpoint = str(checkpoint_path)
         self.model_cfg = os.getenv("SAM2_MODEL_CONFIG", "configs/sam2.1/sam2.1_hiera_l.yaml")
