@@ -71,30 +71,32 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 1298, 848))
-        self.scrollAreaWidgetContents.setMinimumSize(QtCore.QSize(1300, 850))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
+        self.stackedLayout = QtWidgets.QStackedLayout(self.scrollAreaWidgetContents)
+        self.stackedLayout.setContentsMargins(0, 0, 0, 0)
+        self.stackedLayout.setStackingMode(QtWidgets.QStackedLayout.StackAll)
         self.label_3 = QtWidgets.QLabel(self.scrollAreaWidgetContents)
-        self.label_3.setGeometry(QtCore.QRect(9, 9, 2000, 1000))
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.label_3.setSizePolicy(sizePolicy)
         self.label_3.setStyleSheet("background: gray;")
+        self.label_3.setScaledContents(True)
         self.label_3.setText("")
         self.label_3.setObjectName("label_3")
+        self.stackedLayout.addWidget(self.label_3)
 
         self.videoWidget = QVideoWidget(self.label_3)
 
         self.mediaPlayer = QMediaPlayer()
         self.mediaPlayer.setVideoOutput(self.videoWidget)
-        
+
         self.label_4 = QtWidgets.QLabel(self.scrollAreaWidgetContents)
-        self.label_4.setGeometry(QtCore.QRect(10, 10, 2000, 1000))
+        self.label_4.setSizePolicy(sizePolicy)
         self.label_4.setMouseTracking(True)
+        self.label_4.setScaledContents(True)
         self.label_4.setText("")
         self.label_4.setObjectName("label_4")
-
-        # 如果 scrollAreaWidgetContents 没有布局，给它设置一个默认布局
-        if not self.scrollAreaWidgetContents.layout():
-            self.layout = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
-            self.scrollAreaWidgetContents.setLayout(self.layout)
+        self.label_4.setStyleSheet("background: transparent;")
+        self.stackedLayout.addWidget(self.label_4)
 
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         self.layoutWidget = QtWidgets.QWidget(self.splitter)
@@ -280,25 +282,37 @@ class Ui_MainWindow(object):
 
     def enableLabel4(self):
         # 点击打开目录后启用 MyLabel
-        self.label_4.deleteLater()  # 删除原来的 QLabel
-        
+        if self.label_4:
+            self.stackedLayout.removeWidget(self.label_4)
+            self.label_4.deleteLater()  # 删除原来的 QLabel
+
         # 创建 MyLabel 实例并添加到布局
         self.label_4 = MyLabel(self.scrollAreaWidgetContents)
-        self.label_4.setGeometry(QtCore.QRect(10, 10, 2000, 1000))
-        self.label_4.setText("")
         self.label_4.setObjectName("label_4")
-        self.scrollAreaWidgetContents.layout().addWidget(self.label_4)
-        
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.label_4.setSizePolicy(sizePolicy)
+        self.label_4.setMouseTracking(True)
+        self.label_4.setScaledContents(True)
+        self.label_4.setStyleSheet("background: transparent;")
+        self.label_4.setText("")
+        self.stackedLayout.addWidget(self.label_4)
+
 
 
     def disableLabel4(self):
-        self.label_4.deleteLater()  # 删除原来的 QLabel
-        
+        if self.label_4:
+            self.stackedLayout.removeWidget(self.label_4)
+            self.label_4.deleteLater()  # 删除原来的 QLabel
+
         self.label_4 = QtWidgets.QLabel(self.scrollAreaWidgetContents)
-        self.label_4.setGeometry(QtCore.QRect(10, 10, 2000, 1000))
-        self.label_4.setText("")
         self.label_4.setObjectName("label_4")
-        self.scrollAreaWidgetContents.layout().addWidget(self.label_4)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.label_4.setSizePolicy(sizePolicy)
+        self.label_4.setMouseTracking(True)
+        self.label_4.setScaledContents(True)
+        self.label_4.setStyleSheet("background: transparent;")
+        self.label_4.setText("")
+        self.stackedLayout.addWidget(self.label_4)
         
 
 
