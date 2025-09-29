@@ -6,20 +6,13 @@ import numpy as np
 from sampro.device import resolve_device
 from sampro.sam2.build_sam import build_sam2
 from sampro.sam2.sam2_image_predictor import SAM2ImagePredictor
+from sampro.LabelVideo_TW import resolve_checkpoint_path
 
 SAMPRO_ROOT = Path(__file__).resolve().parent
 
 class Anything_TW():
     def __init__(self):
-        checkpoint_path = os.getenv(
-            "SAM2_CHECKPOINT",
-            SAMPRO_ROOT / "checkpoints" / "sam2.1_hiera_large.pt",
-        )
-        checkpoint_path = Path(checkpoint_path).expanduser().resolve()
-        if not checkpoint_path.exists():
-            raise FileNotFoundError(
-                f"未找到 SAM2 权重文件: {checkpoint_path}. 请将模型文件放在 sampro/checkpoints/ 目录"
-            )
+        checkpoint_path = resolve_checkpoint_path()
 
         self.sam2_checkpoint = str(checkpoint_path)
         self.model_cfg = os.getenv("SAM2_MODEL_CONFIG", "configs/sam2.1/sam2.1_hiera_l.yaml")
