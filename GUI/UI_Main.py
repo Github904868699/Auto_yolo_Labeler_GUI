@@ -74,27 +74,46 @@ class Ui_MainWindow(object):
         self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 1298, 848))
         self.scrollAreaWidgetContents.setMinimumSize(QtCore.QSize(1300, 850))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
-        self.label_3 = QtWidgets.QLabel(self.scrollAreaWidgetContents)
-        self.label_3.setGeometry(QtCore.QRect(9, 9, 2000, 1000))
+        self.videoContainer = QtWidgets.QWidget(self.scrollAreaWidgetContents)
+        self.videoContainer.setObjectName("videoContainer")
+        self.videoContainer.setMinimumSize(QtCore.QSize(2000, 1000))
+        self.videoContainer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.videoStack = QtWidgets.QStackedLayout(self.videoContainer)
+        self.videoStack.setStackingMode(QtWidgets.QStackedLayout.StackAll)
+        self.videoStack.setContentsMargins(0, 0, 0, 0)
+        self.videoStack.setSpacing(0)
+        self.label_3 = QtWidgets.QLabel(self.videoContainer)
         self.label_3.setStyleSheet("background: gray;")
         self.label_3.setText("")
         self.label_3.setObjectName("label_3")
+        self.label_3.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.videoStack.addWidget(self.label_3)
 
-        self.videoWidget = QVideoWidget(self.label_3)
+        self.videoWidget = QVideoWidget(self.videoContainer)
+        self.videoWidget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.videoStack.addWidget(self.videoWidget)
 
         self.mediaPlayer = QMediaPlayer()
         self.mediaPlayer.setVideoOutput(self.videoWidget)
-        
-        self.label_4 = QtWidgets.QLabel(self.scrollAreaWidgetContents)
-        self.label_4.setGeometry(QtCore.QRect(10, 10, 2000, 1000))
+
+        self.label_4 = MyLabel(self.videoContainer)
         self.label_4.setMouseTracking(True)
+        self.label_4.setStyleSheet("background: transparent;")
         self.label_4.setText("")
         self.label_4.setObjectName("label_4")
+        self.videoStack.addWidget(self.label_4)
+        self.videoStack.setCurrentWidget(self.label_4)
+        self.label_4.setEnabled(False)
+        self.label_4.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, True)
 
         # 如果 scrollAreaWidgetContents 没有布局，给它设置一个默认布局
         if not self.scrollAreaWidgetContents.layout():
             self.layout = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
             self.scrollAreaWidgetContents.setLayout(self.layout)
+        layout = self.scrollAreaWidgetContents.layout()
+        layout.setContentsMargins(9, 9, 9, 9)
+        layout.setSpacing(0)
+        layout.addWidget(self.videoContainer)
 
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         self.layoutWidget = QtWidgets.QWidget(self.splitter)
@@ -279,26 +298,24 @@ class Ui_MainWindow(object):
         self.splitter.setSizes([size1, size2])
 
     def enableLabel4(self):
-        # 点击打开目录后启用 MyLabel
-        self.label_4.deleteLater()  # 删除原来的 QLabel
-        
-        # 创建 MyLabel 实例并添加到布局
-        self.label_4 = MyLabel(self.scrollAreaWidgetContents)
-        self.label_4.setGeometry(QtCore.QRect(10, 10, 2000, 1000))
-        self.label_4.setText("")
-        self.label_4.setObjectName("label_4")
-        self.scrollAreaWidgetContents.layout().addWidget(self.label_4)
+        if isinstance(self.label_4, MyLabel):
+            self.label_4.flag = False
+            self.label_4.move = False
+        self.label_4.clear()
+        self.label_4.setEnabled(True)
+        self.label_4.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, False)
+        self.videoStack.setCurrentWidget(self.label_4)
         
 
 
     def disableLabel4(self):
-        self.label_4.deleteLater()  # 删除原来的 QLabel
-        
-        self.label_4 = QtWidgets.QLabel(self.scrollAreaWidgetContents)
-        self.label_4.setGeometry(QtCore.QRect(10, 10, 2000, 1000))
-        self.label_4.setText("")
-        self.label_4.setObjectName("label_4")
-        self.scrollAreaWidgetContents.layout().addWidget(self.label_4)
+        if isinstance(self.label_4, MyLabel):
+            self.label_4.flag = False
+            self.label_4.move = False
+        self.label_4.clear()
+        self.label_4.setEnabled(False)
+        self.label_4.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, True)
+        self.videoStack.setCurrentWidget(self.videoWidget)
         
 
 
