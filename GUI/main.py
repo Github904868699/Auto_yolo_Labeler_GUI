@@ -23,6 +23,7 @@ from PyQt5.QtCore import QThread, pyqtSignal, QTimer
 class VideoProcessingThread(QThread):
     finished = pyqtSignal()  # 完成信号
     frame_ready = pyqtSignal(object)  # 添加新信号用于传递处理后的帧
+    progress_changed = pyqtSignal(int, int)  # 当前帧，总帧数
 
     def __init__(self, avt, video_path, output_dir, prompts, label_map, save_path):
         super().__init__()
@@ -34,6 +35,7 @@ class VideoProcessingThread(QThread):
         self.save_path = save_path
         self.xml_messages = []
         os.makedirs(self.output_dir, exist_ok=True)
+        self.total_frames = 0
 
     def run(self):
         try:
@@ -43,7 +45,10 @@ class VideoProcessingThread(QThread):
             os.makedirs(mask_dir, exist_ok=True)
 
             # 提取视频帧
-            self.AVT.extract_frames_from_video(self.video_path, self.output_dir,fps=2)
+            _, saved_count = self.AVT.extract_frames_from_video(self.video_path, self.output_dir, fps=2)
+            self.total_frames = saved_count
+            self.progress_changed.emit(0, self.total_frames)
+
             self.AVT.set_video(self.output_dir)
             self.AVT.inference(self.output_dir)
             self.AVT.reset_object_prompts()
@@ -65,10 +70,15 @@ class VideoProcessingThread(QThread):
                 self.AVT.add_new_points_or_box(obj_id=obj_id)
 
             # 获取处理后的帧并发送信号
+            def progress_callback(frame_idx, total_frames):
+                total = self.total_frames or total_frames or 0
+                self.progress_changed.emit(frame_idx + 1, total)
+
             processed_frame, xml_messages = self.AVT.Draw_Mask_at_frame(
                 save_image_path=mask_dir,
                 save_path=self.save_path,
                 label_map=self.label_map,
+                progress_callback=progress_callback,
             )  # 使用新的mask_dir路径
             self.xml_messages = xml_messages
             self.frame_ready.emit(processed_frame)  # 发送处理后的帧
@@ -948,6 +958,9 @@ class MainFunc(QMainWindow):
 
 
     def on_video_processing_complete(self):
+        self.ui.progressBar.hide()
+        self.ui.progressBar.setValue(0)
+        self.ui.progressBar.setRange(0, 100)
         self.worker_thread.deleteLater()
         self.xml_messages = self.worker_thread.xml_messages
         # print(self.xml_messages)
@@ -982,6 +995,16 @@ class MainFunc(QMainWindow):
         self.ui.listWidget.addItem("检测打标完成！")
         print("检测打标完成！")
         self.ui.pushButton_start_marking.setEnabled(bool(self.video_prompt_queue))
+
+    def on_video_progress_changed(self, current, total):
+        if total and self.ui.progressBar.maximum() != total:
+            self.ui.progressBar.setRange(0, total)
+
+        # 防止 current 超出范围
+        if total and current > total:
+            current = total
+
+        self.ui.progressBar.setValue(current)
 
     def on_save_type_triggered(self, fmt, checked):
         if checked:
@@ -1057,7 +1080,18 @@ class MainFunc(QMainWindow):
                 label_map,
                 self.save_path,
             )
-            self.worker_thread.finished.connect(self.on_video_processing_complete)
+            self.worker_thread.progress_changed.connect(
+                self.on_video_progress_changed,
+                Qt.QueuedConnection,
+            )
+            self.worker_thread.finished.connect(
+                self.on_video_processing_complete,
+                Qt.QueuedConnection,
+            )
+
+            self.ui.progressBar.show()
+            self.ui.progressBar.setValue(0)
+            self.ui.progressBar.setRange(0, 0)
             self.worker_thread.start()
 
         else:
