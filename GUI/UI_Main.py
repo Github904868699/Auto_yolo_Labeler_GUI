@@ -12,6 +12,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 
+from util.path_utils import resource_path
+
 
 # 鼠标绘画事件
 class MyLabel(QtWidgets.QLabel):
@@ -52,7 +54,7 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1618, 947)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("GUI/icons/logo.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap(resource_path("GUI/icons/logo.ico")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -204,7 +206,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
         self.actionOpen_Dir = QtWidgets.QAction(MainWindow)
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap("GUI/icons/open.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon1.addPixmap(QtGui.QPixmap(resource_path("GUI/icons/open.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionOpen_Dir.setIcon(icon1)
         self.actionOpen_Dir.setObjectName("actionOpen_Dir")
 
@@ -212,38 +214,38 @@ class Ui_MainWindow(object):
 
         self.actionChange_Save_Dir = QtWidgets.QAction(MainWindow)
         icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap("GUI/icons/save.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon2.addPixmap(QtGui.QPixmap(resource_path("GUI/icons/save.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionChange_Save_Dir.setIcon(icon2)
         self.actionChange_Save_Dir.setObjectName("actionChange_Save_Dir")
         self.actionNext_Image = QtWidgets.QAction(MainWindow)
         self.actionNext_Image.setEnabled(False)
         icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap("GUI/icons/next.jpg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon3.addPixmap(QtGui.QPixmap(resource_path("GUI/icons/next.jpg")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionNext_Image.setIcon(icon3)
         self.actionNext_Image.setObjectName("actionNext_Image")
         self.actionPrev_Image = QtWidgets.QAction(MainWindow)
         self.actionPrev_Image.setEnabled(False)
         self.actionVideo_marking = QtWidgets.QAction(MainWindow)
         icon7 = QtGui.QIcon()
-        icon7.addPixmap(QtGui.QPixmap("GUI/icons/Video_marking.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon7.addPixmap(QtGui.QPixmap(resource_path("GUI/icons/Video_marking.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionVideo_marking.setIcon(icon7)
         self.actionVideo_marking.setObjectName("actionVideo_marking")
 
         self.actionVideo_marking.triggered.connect(self.enableLabel4)
 
         icon4 = QtGui.QIcon()
-        icon4.addPixmap(QtGui.QPixmap("GUI/icons/prev.jpg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon4.addPixmap(QtGui.QPixmap(resource_path("GUI/icons/prev.jpg")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionPrev_Image.setIcon(icon4)
         self.actionPrev_Image.setObjectName("actionPrev_Image")
         self.actionCreate_RectBox = QtWidgets.QAction(MainWindow)
         self.actionCreate_RectBox.setEnabled(False)
         icon5 = QtGui.QIcon()
-        icon5.addPixmap(QtGui.QPixmap("GUI/icons/create.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon5.addPixmap(QtGui.QPixmap(resource_path("GUI/icons/create.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionCreate_RectBox.setIcon(icon5)
         self.actionCreate_RectBox.setObjectName("actionCreate_RectBox")
         self.actionOpen_Video = QtWidgets.QAction(MainWindow)
         icon6 = QtGui.QIcon()
-        icon6.addPixmap(QtGui.QPixmap("GUI/icons/video.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon6.addPixmap(QtGui.QPixmap(resource_path("GUI/icons/video.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionOpen_Video.setIcon(icon6)
         self.actionOpen_Video.setObjectName("actionOpen_Video")
 
